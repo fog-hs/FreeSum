@@ -2,11 +2,13 @@
 
 module HFFree where
 
+import GHC.Types (Symbol)
 import To
 import HFContainer
 import HFList
 import HFNonempty
 import HFSum
+import Data.Proxy
 
 -- Free and Free'
 
@@ -104,5 +106,23 @@ instance Make DoubleList where
 egHFree8 = make3 @DoubleList ("hello",(0,True))
 
 data Sum' (a :: *) where
- Sum' :: Sum (xs :: Sum_T *) ->  Sum' a
-type Test9 = HFree' Sum'
+ Sum' :: Sum (xs :: Sum_T *) -> Sum' (Sum xs)
+
+type instance To Container (H_Container Sum_T k) Sum' = Sum 
+
+type instance To Container (F_Container Sum_T k *) Sum' = FSum 
+
+
+instance Make Sum_T where
+ type Make3 Sum_T a b c = Sum ('Sum_T ("name" :: Symbol) '[ '("name" :: Symbol,a) , '("nb" :: Symbol,b) , '("nc" :: Symbol,c) ]) -- , '[ '[ '("na" :: Symbol,a)], '[ '("nb"::Symbol,b) , '("nc"::Symbol,c) ]])
+ make3 (a::a,(b,c)) = HFree' $ FSum (Proxy :: Proxy "name") (HPure' a)
+
+type SumTree = HFree' Sum_T
+
+test10 :: test10
+  :: HFree'
+       Sum_T
+       (Sum
+          ('Sum_T
+             "name" '[ '("name", [Char]), '("nb", Integer), '("nc", Bool)]))
+test10 = make3 @Sum_T ("hello",(0,True))
